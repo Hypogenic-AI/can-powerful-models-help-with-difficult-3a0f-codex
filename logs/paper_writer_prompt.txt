@@ -1,0 +1,652 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .codex/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Can Powerful Models Help with Difficult Research Without Unrecognized Safety Risks?
+
+## 1. Executive Summary
+
+We tested whether real instruction-tuned models could make useful substantive judgments about research artifacts while independently recognizing consequential integrity faults. A new 32-case audit covered literature review, coding, experiment design, and mathematical reasoning; half the artifacts were clean and half contained a planted fault. Qwen3-4B, 8B, and 14B each reviewed every case under an ordinary and a safety-aware prompt, producing 192 deterministic GPU inference trials.
+
+Overall substantive accuracy was **96.4%** (185/192; Wilson 95% CI 92.7--98.2%), far above the four-choice chance baseline. Safety-aware review improved both integrity and substantive accuracy from 93.8%/94.8% to 96.9%/97.9% (paired differences +3.1 percentage points), but neither change was statistically significant after Holm correction (both McNemar adjusted *p*=.50; case-cluster bootstrap CIs included zero). The safety-aware condition missed **3/48 planted faults (6.25%)**. Crucially, its one-sided 95% exact upper bound was **15.4%**, exceeding the preregistered 10% residual-risk threshold. Thus these models were useful on this pilot, explicit oversight helped descriptively and caused no clean-case false alarms, but the experiment does **not** support the stronger claim that they helped without unrecognized safety risk.
+
+The practical lesson is that capability, integrity, and uncertainty must be reported separately. Even Qwen3-14B's 0/16 observed misses corresponds to a 17.1% one-sided upper bound because the safety sample is small. “No observed incident” is not a safety certificate.
+
+## 2. Research Question & Motivation
+
+**Question.** Can powerful models make correct judgments about difficult research artifacts while reliably recognizing consequential integrity and safety faults, and does an explicit oversight protocol improve that trade-off?
+
+Research-agent benchmarks show growing competence in paper replication, ML engineering, repository coding, evidence synthesis, and mathematics. Yet RE-Bench agents sometimes exploited evaluators, SWE-bench-style tests can be incomplete, and sabotage evaluations show that residual risk depends on the model, scaffold, access, monitor, and audit budget. Existing work rarely measures useful task judgment and concealed-failure recognition on the same trajectory. This experiment operationalizes that gap with paired endpoints.
+
+## 3. Literature Review Summary
+
+- **PaperBench** uses 20 paper replications and 8,316 author-backed rubric items; its strongest tested agent averaged 21.0%, illustrating the difficulty of long-horizon research replication.
+- **RE-Bench** compares agents and experts under time budgets on seven AI R&D tasks and documents evaluator exploitation, motivating held-out grading and immutable traces.
+- **MLE-bench, MLAgentBench, and SWE-bench** motivate executable capability scoring but also expose contamination, weak-test, and reward-hacking risks.
+- **TrialMind** shows how literature-review assistance can be evaluated through recall, extraction accuracy, time, and human uplift.
+- **FrontierMath** motivates novel, verifiable mathematical items rather than familiar benchmark questions.
+- **Sabotage Evaluations** motivates mitigation-conditioned attack success, monitor recall, false positives, and exact rare-event bounds.
+
+The evidence was assessed with an ML-adapted GRADE lens. It is moderate for the claim that agents can improve bounded research tasks, but low for broad deployment safety because benchmarks are indirect, agent/model effects vary, and rare consequential failures are imprecisely estimated.
+
+## 4. Methodology
+
+### Benchmark and design
+
+The newly authored [benchmark](datasets/research_agent_audit.json) contains 32 unique cases: eight each for literature review, coding, experiment design, and mathematics. Within every domain, four cases are clean and four contain a fault. Substantive and integrity decisions each have four options; correct option positions are exactly balanced (eight A/B/C/D keys per endpoint). No public benchmark question was copied verbatim.
+
+Faults include fabricated or mismatched citations, evidence omission, duplicated cohorts, test leakage/weakening, unauthorized exfiltration, fabricated metrics, pseudoreplication, optional stopping, outcome switching, ignored domain restrictions, division by zero, and counterexample omission. Exact keyed choices provide deterministic grading without an LLM judge.
+
+Each model saw each case twice:
+
+1. **Ordinary review:** expert assessment with a concise structured judgment.
+2. **Safety-aware review:** independently solve the substantive problem and audit for concealed invalidity, evaluator manipulation, unauthorized action, or evidence/proof defects; CLEAN remained a live option.
+
+Both prompts required JSON containing substantive option, integrity option, and a short rationale. Temperature was 0, generation was capped at 180 tokens, and Qwen thinking mode was disabled. The strict endpoint was joint correctness. Secondary risk-adjusted utility was fixed as substantive accuracy minus twice the missed-fault proportion; it is never reported without its components.
+
+### Models and compute
+
+The intended OpenRouter smoke test failed with HTTP 403 “total limit exceeded,” and `OPENAI_API_KEY` was empty. To comply with the requirement to use real models rather than simulations, we downloaded **Qwen3-4B, Qwen3-8B, and Qwen3-14B** and ran bfloat16 inference locally. This is a preregistration deviation: size diversity within one family replaced cross-provider diversity.
+
+Inference used one NVIDIA RTX A6000 (49,140 MiB) with batch sizes 16, 16, and 12 respectively. Four identical GPUs were available, but one sufficed. Approximate generation-only latency per trial was 0.277 s (4B), 0.260 s (8B), and 0.544 s (14B); model download/load time is excluded. The run produced 56,166 total tokens and no parse failures. Local API cost was $0; hardware and download costs were not monetized. Environment versions are in [environment.json](results/environment.json).
+
+### Preregistered analysis
+
+The matched unit was model-case (96 prompt pairs). Exact two-sided McNemar tests compared prompts for integrity and substantive correctness; the two tests used Holm correction. Case-cluster bootstrap intervals (10,000 resamples, seed 42) account for repeated models within cases. Wilson intervals summarize proportions; a one-sided 95% Clopper--Pearson bound summarizes missed-fault risk. An exact binomial test compared substantive correctness with 25% chance. The illustrative acceptance rule required above-chance capability, no more than a 5-point substantive degradation, no material clean-case false-alarm increase, and a missed-fault upper bound below 10%.
+
+## 5. Results
+
+### Primary outcomes
+
+| Outcome | Ordinary | Safety-aware | Paired difference (95% case-cluster bootstrap CI) | Holm-adjusted *p* |
+|---|---:|---:|---:|---:|
+| Substantive accuracy | 94.8% | 97.9% | +3.1 pp [0.0, 8.3] | .50 |
+| Integrity accuracy | 93.8% | 96.9% | +3.1 pp [0.0, 7.3] | .50 |
+| Joint accuracy | 88.5% | 94.8% | +6.3 pp (descriptive) | -- |
+
+Across both prompts, substantive accuracy was 96.4% (185/192; Wilson 95% CI 92.7--98.2%; exact one-sided binomial *p*=9.60e-101 versus 25%). The safety prompt never changed a correct decision into an incorrect one: its three integrity gains and three substantive gains were all one-directional, but only three discordant pairs per endpoint provide weak inferential evidence.
+
+### Safety endpoints by model
+
+| Model | Protocol | Substantive | Integrity | Fault recall | Clean specificity | Misses / 16 | One-sided 95% upper miss bound |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Qwen3-4B | Ordinary | 93.8% | 93.8% | 93.8% | 93.8% | 1 | 26.4% |
+| Qwen3-4B | Safety | 96.9% | 96.9% | 93.8% | 100% | 1 | 26.4% |
+| Qwen3-8B | Ordinary | 93.8% | 87.5% | 81.3% | 93.8% | 3 | 41.7% |
+| Qwen3-8B | Safety | 96.9% | 93.8% | 87.5% | 100% | 2 | 34.4% |
+| Qwen3-14B | Ordinary | 96.9% | 100% | 100% | 100% | 0 | 17.1% |
+| Qwen3-14B | Safety | 100% | 100% | 100% | 100% | 0 | 17.1% |
+
+Larger was better here, but not monotonically: Qwen3-8B underperformed 4B on integrity. That argues against using parameter count as a safety proxy. No individual model satisfied the 10% upper-bound criterion because 16 fault trials per cell are too few—even the perfect 14B cell has a 17.1% bound.
+
+### Domain results and error analysis
+
+Safety-aware integrity accuracy was 95.8% for coding, 91.7% for literature review, and 100% for experiment design and mathematics. Mathematics saturated at 100% for both endpoints and prompts, indicating that those items were too easy to discriminate models.
+
+The three safety-aware misses were:
+
+- Qwen3-4B and Qwen3-8B both recognized likely overlap between two study reports but selected CLEAN rather than “duplicate population counted independently.” Their rationales described the problem while their categorical decision failed—an important interface/decision-consistency failure.
+- Qwen3-8B described a hardcoded evaluator metric as fabricated but selected the neighboring “data leakage” category. The issue was detected semantically but misclassified under exact scoring.
+
+Ordinary review also produced two false alarms on clean cases; safety-aware review produced none (48/48 specificity). These observations suggest explicit auditing can improve decision discipline, but the benchmark's multiple-choice format may over-penalize near-category errors and underrepresent open-ended discovery.
+
+![Performance by model and protocol](figures/performance.png)
+
+![Integrity accuracy by domain](figures/integrity_by_domain.png)
+
+Raw outputs are in [raw_outputs_small.json](results/raw_outputs_small.json) and [raw_outputs_14b.json](results/raw_outputs_14b.json); trial scores, summaries, statistics, and all failures are in `results/`.
+
+## 6. Discussion & Interpretation
+
+**H1 supported within this benchmark.** Models made highly accurate substantive research judgments. This establishes bounded usefulness, not autonomous research competence: deciding among authored options is easier than conducting a full literature review, editing a repository, designing a live experiment, or proving a frontier theorem.
+
+**H2 not established.** Safety-aware prompting improved integrity accuracy by 3.1 points, with no reverse discordances, but the confidence interval touched zero and adjusted *p*=.50. More paired cases are needed.
+
+**H3 descriptively satisfied.** Rather than a capability loss, substantive accuracy rose 3.1 points. The pilot was not powered for a formal non-inferiority margin.
+
+**H4 failed.** The aggregate safety-aware miss estimate was 6.25%, but the 95% upper bound was 15.4%, above 10%. The scientifically valid conclusion is insufficient evidence of low residual risk, not evidence that the true rate is 15.4%.
+
+**H5 descriptively satisfied.** Safety-aware review had no false alarms on 48 clean trials. Again, the sample is small.
+
+Under the critical-analysis framework, confidence is **low-to-moderate** for the narrow prompting result and **very low** for any deployment claim. Strengths include preregistered thresholds, paired controls, balanced labels, exact grading, retained negative results, raw trajectories, and rare-event bounds. Downgrades arise from artificial cases, a single model family, small correlated samples, ceiling effects, deterministic single runs, and indirectness from review decisions to real agent actions.
+
+## 7. Limitations
+
+- **Construct validity:** multiple-choice auditing measures recognition/classification, not end-to-end research agency, tool policy compliance, or unknown-unknown discovery.
+- **Difficulty:** especially mathematics, the cases were easier than PaperBench, RE-Bench, or FrontierMath. Accuracy likely overstates open-ended performance.
+- **Model diversity:** all models are Qwen3 variants. Shared training and architecture can create correlated blind spots; the planned GPT/Claude/Gemini comparison was blocked by credentials.
+- **Sample size:** only 16 fault trials per model/protocol and 48 aggregate safety-prompt fault trials make rare-event bounds wide.
+- **No human uplift estimate:** no participants were recruited. This study compares model review protocols, not unaided humans with assisted humans.
+- **No propensity estimate:** planted faults test elicited recognition capability; they do not estimate how often deployed agents would introduce faults intentionally or accidentally.
+- **Single deterministic run:** temperature 0 improves reproducibility but does not measure sampling variance or consistency under stochastic decoding.
+- **Scoring strictness:** exact category grading counts a semantically noticed but misclassified issue as a full miss. Conversely, fixed options can cue the correct concern.
+- **Latency/cost:** reported latency excludes downloads and loading; hardware energy and depreciation were not measured.
+
+## 8. Conclusions & Next Steps
+
+Powerful local models were useful reviewers on this bounded four-domain pilot, and an explicit independent integrity check improved observed performance without false-alarm cost. However, three planted faults remained unrecognized or misclassified and the 15.4% upper confidence bound failed the preregistered 10% criterion. The answer is therefore conditional and presently negative: **usefulness was demonstrated, but usefulness without unrecognized safety risk was not**.
+
+The next study should use at least several hundred fault trials, harder executable/open-ended tasks from PaperBench/RE-Bench/SWE-bench-style environments, and independent model families. It should randomize actual researchers between unaided, assisted, and autonomous conditions under matched time/compute; compare artifact-only, transcript, independent-monitor, and randomized-human-audit protocols; and grade with held-out tests plus blinded experts. Safety claims should remain scoped to the task distribution and oversight budget.
+
+## Reproducibility
+
+```bash
+uv venv
+source .venv/bin/activate
+uv sync
+python src/build_benchmark.py
+
+# Real local inference (requires an NVIDIA GPU and model downloads)
+export CC="$PWD/scripts/zigcc"
+python src/run_local_models.py --models Qwen/Qwen3-4B Qwen/Qwen3-8B --output results/raw_outputs_small.json
+HF_HOME="$PWD/.hf_cache" python src/run_local_models.py --models Qwen/Qwen3-14B --batch-size 12 --output results/raw_outputs_14b.json
+
+python src/analyze.py
+```
+
+Re-running benchmark construction and analysis produced byte-identical benchmark, scored-trial, and statistical files. SHA-256 records are in [hashes.json](results/hashes.json).
+
+## References
+
+1. Chan et al. (2025). *MLE-bench: Evaluating Machine Learning Agents on Machine Learning Engineering*. arXiv:2410.07095.
+2. Starace et al. (2025). *PaperBench: Evaluating AI's Ability to Replicate AI Research*. arXiv:2504.01848.
+3. Wijk et al. (2024). *RE-Bench: Evaluating Frontier AI R&D Capabilities of Language Model Agents Against Human Experts*. arXiv:2411.15114.
+4. Glazer et al. (2024). *FrontierMath*. arXiv:2411.04872.
+5. Wang et al. (2024). *Accelerating Clinical Evidence Synthesis with Large Language Models (TrialMind)*. arXiv:2406.17755.
+6. Huang et al. (2023). *MLAgentBench*. arXiv:2310.03302.
+7. Lu et al. (2024). *The AI Scientist*. arXiv:2408.06292.
+8. Jimenez et al. (2024). *SWE-bench*. arXiv:2310.06770.
+9. Benton et al. (2024). *Sabotage Evaluations for Frontier Models*.
+
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Preregistered Research Plan
+
+## Motivation & Novelty Assessment
+
+### Why This Research Matters
+
+Research agents can accelerate literature synthesis, coding, experimental design, and mathematics, but ordinary output-quality scores can reward artifacts containing fabricated evidence, weakened tests, invalid statistics, or proof gaps. Users benefit only when useful gains survive an oversight regime whose residual failure rate is measured rather than assumed.
+
+### Gap in Existing Work
+
+PaperBench, RE-Bench, MLE-bench, SWE-bench, TrialMind, and FrontierMath provide strong capability templates, while Sabotage Evaluations measures concealed failures under mitigations. Few evaluations score task competence and recognition of consequential faults on the same instances across research domains, include clean controls, and report a one-sided bound on missed faults.
+
+### Our Novel Contribution
+
+We introduce a small, newly authored four-domain paired capability--safety audit. Each instance requires a substantive research judgment and an independent integrity judgment. We compare an ordinary reviewer prompt with an explicit safety-aware protocol across three contemporary model families, measuring whether stronger review instructions improve fault recognition without degrading legitimate task performance or causing excessive false alarms. This is a preliminary evaluation-method demonstration, not a deployment-safety certificate.
+
+### Experiment Justification
+
+- **Experiment 1 -- Paired capability and safety audit:** tests whether useful research judgment and fault recognition coincide on the same outputs.
+- **Experiment 2 -- Oversight-prompt ablation:** estimates the effect of explicitly separating substantive and integrity checks while holding model, task, and decoding fixed.
+- **Experiment 3 -- Cross-domain/model robustness:** reveals shared blind spots and avoids treating one family or task as representative.
+
+## Research Question
+
+Can powerful models make correct judgments about difficult research artifacts while reliably recognizing consequential integrity and safety faults, and does an explicit oversight protocol improve that trade-off?
+
+## Background and Motivation
+
+The literature shows meaningful but incomplete autonomous research capability and recurrent evaluator exploitation, premature completion, hallucination, and hidden-invalidity risks. The operational question is conditional: under a specified task distribution and review protocol, what useful performance is achieved and what consequential failures remain unrecognized?
+
+## Direction Budget
+
+Directions were scored 1--5 on literature support, hypothesis fit, information gain, and feasibility. The retained integrated directions are monitoring stress tests (20/20), paired capability--safety tasks (19/20), and risk-adjusted utility/human-uplift design (17/20). Rejected: capability-only benchmarking (14; misses safety), wet-lab studies (13; infeasible/risky), autonomous discovery tournaments (12; expensive and poorly identified), self-reported confidence (12; weak proxy), and math-only evaluation (11; narrow). No later evidence changed this ranking. This run implements the first two and specifies, but cannot estimate, human uplift because recruiting participants is outside the automated session.
+
+## Hypothesis Decomposition
+
+- **H1 (capability):** substantive decision accuracy exceeds random choice (0.25).
+- **H2 (oversight):** the safety-aware prompt increases paired integrity accuracy relative to ordinary review.
+- **H3 (non-degradation):** safety-aware review does not reduce substantive accuracy by more than 5 percentage points (descriptive pilot criterion).
+- **H4 (residual risk):** the one-sided 95% Clopper--Pearson upper bound on missed-fault rate is below the preregistered illustrative threshold of 10%.
+- **H5 (clean controls):** explicit oversight does not materially inflate false alarms on clean artifacts.
+
+Independent variables are prompt protocol, model family, domain, and fault status/type. Outcomes are substantive accuracy, integrity accuracy, fault recall, clean specificity, joint success, format compliance, latency, tokens, and cost. Alternatives include prompt-length effects, multiple-choice shortcuts, contamination, correlated items, and API nondeterminism.
+
+## Proposed Methodology
+
+### Approach
+
+Create 32 new deterministic cases (8 each in literature review, coding, experiment design, and mathematics), balanced between clean and faulted artifacts. Each has four substantive options and four integrity options with exactly one keyed answer. Faults cover fabricated/mismatched citations, evidence omission, test leakage/weakening, unauthorized actions, pseudoreplication, outcome switching, invalid algebra, and unjustified proof steps. Cases use concepts rather than verbatim public benchmark questions.
+
+Run three OpenRouter-hosted model families under two prompts at temperature 0. Ordinary review requests a concise expert review; safety-aware review explicitly separates task correctness from integrity, treats clean as possible, and warns against trusting stated success. Both return the same JSON schema. Raw requests, responses, timestamps, usage, and errors are cached.
+
+### Experimental Steps
+
+1. Generate and schema-validate the benchmark; report balance and duplicates.
+2. Smoke-test one model/case/protocol and validate JSON parsing.
+3. Run the 3 model x 2 protocol x 32 case factorial (192 planned calls), with retries and caching.
+4. Score exact choices without an LLM judge; preserve unparsable outputs as failures.
+5. Compute paired/stratified metrics, intervals, effect sizes, errors, latency, tokens, costs, and figures.
+6. Re-run scoring from cached outputs and compare hashes.
+
+### Baselines
+
+- Chance (25%) for each four-choice judgment.
+- Ordinary reviewer prompt (primary baseline).
+- Clean cases (false-positive control).
+- Cross-family comparison (shared-blind-spot check).
+
+### Evaluation Metrics
+
+- **Substantive accuracy:** correct domain judgment (usefulness).
+- **Fault recall / clean specificity:** detection and false-alarm control.
+- **Integrity accuracy:** correct fault category or CLEAN.
+- **Joint success:** both judgments correct.
+- **Missed-fault rate:** faulted artifacts with wrong integrity choice.
+- **Format compliance, latency, tokens, cost:** operational reliability.
+- **Risk-adjusted utility (secondary):** substantive accuracy - 2 x missed-fault proportion; components remain primary.
+
+### Statistical Analysis Plan
+
+Use matched model--case comparisons. Primary H2 test is exact two-sided McNemar on integrity correctness; report paired risk difference with case-cluster bootstrap 95% CI and matched odds ratio where defined. Apply Holm correction to integrity and substantive prompt comparisons. Report Wilson proportion intervals and one-sided exact Clopper--Pearson upper bounds for missed faults. H1 uses an exact binomial test against 0.25. Sensitivity checks exclude parse failures and bootstrap by case and model. Alpha is 0.05; all trials and negative results remain.
+
+There are 96 matched prompt pairs. Case/model correlation limits generalization, so clustered intervals and disaggregated results matter more than nominal p-values. No post-hoc power claim will be made.
+
+## Expected Outcomes
+
+Support requires above-chance substantive performance, improved integrity recognition, no large capability loss, and a missed-fault upper bound below 10%. Improvement with a bound above 10% supports protocol usefulness but refutes a low-residual-risk claim. Heterogeneity implies conditional, not universal, conclusions.
+
+## Timeline and Milestones
+
+- Resource audit/preregistration: 20 minutes.
+- Environment, benchmark, harness: 35 minutes.
+- API execution: 45--90 minutes plus 25% debugging buffer.
+- Analysis, figures, rerun: 30 minutes.
+- Report and README: 30 minutes.
+
+## Resource Plan
+
+Use isolated `.venv`. CPU suffices for APIs/statistics; four RTX A6000 GPUs are available but unnecessary. Dependencies are OpenAI-compatible client, NumPy, pandas, SciPy, statsmodels, matplotlib, and seaborn. Outputs stay in `results/`, `figures/`, and `logs/`.
+
+## Potential Challenges
+
+- Model/version drift: record returned identifiers and timestamps.
+- Rate limits/malformed JSON: retries, robust extraction, cache, and explicit parse failures.
+- Artificial benchmark: avoid deployment generalization and publish all cases.
+- Multiple-choice shortcuts: balance positions; explanations are not used for scoring.
+- Shared blind spots: compare families; deployment still needs human audit.
+- No recruited humans: specify a future randomized unaided/assisted study; do not call model differences human uplift.
+
+## Success Criteria
+
+Technical success means all cases, models, and protocols are attempted and raw outputs, prompts, scoring, tables, and figures are reproducible. Scientific support for "help without unrecognized risk" requires H1--H5 under the tested protocol; otherwise conclusions are qualified or negative.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Powerful Research Agents and Unrecognized Safety Risks
+
+## Review scope
+
+**Question.** Can powerful models improve difficult research work—literature review, coding, experiment design/execution, or mathematics—without adding safety risks that users or evaluators fail to recognize?
+
+**Inclusion.** Empirical agent evaluations with realistic research/coding tasks, executable or expert-backed grading, human comparisons, or operational measures of concealed failures and oversight. Priority was given to 2023–2026 work with public artifacts. **Exclusion.** Chat-only knowledge tests, capability claims without a benchmark, generic safety taxonomies without agentic tasks, and inaccessible or unverifiable results.
+
+Sources searched were the paper-finder service (failed with HTTP 500), arXiv, Semantic Scholar-indexed results, official project pages, and citation links from key papers. Search terms combined *research agent*, *AI R&D benchmark*, *paper replication*, *ML experimentation*, *literature synthesis*, *mathematical reasoning*, *sabotage*, *sandbagging*, *monitoring*, and *oversight*. Nine papers passed title and abstract screening; PaperBench, RE-Bench, and Sabotage Evaluations received all-chunk review.
+
+## Key evidence
+
+### PaperBench — Starace et al. (2025)
+
+- **Question/method:** Can agents reproduce 20 ICML 2024 Spotlight/Oral papers from scratch? Authors created 8,316 hierarchical rubric items, co-developed with original paper authors, plus a calibrated LLM judge and a judge benchmark.
+- **Results:** The best reported tested agent scored 21.0% on average and did not beat top ML PhD baselines. Humans improved slowly at first as they read and planned; agents often terminated prematurely.
+- **Metrics/baselines:** rubric completion, replication score, judge-vs-human agreement, time-limited expert performance.
+- **Limitations:** only ML replication; expensive; judge errors and scaffold behavior matter; benchmark access may eventually contaminate training.
+- **Relevance:** strongest template for measuring substantive research output, but it does not itself measure whether an apparently successful reproduction contains concealed harmful changes.
+
+### RE-Bench — Wijk et al. (2024)
+
+- **Question/method:** Seven open-ended ML research-engineering environments, 71 eight-hour attempts by 61 experts, best-of-*k* agents, and budgets from minutes to 32 aggregate hours.
+- **Results:** At two hours, the best agent aggregate was roughly 4× the human expert score; humans scaled better with time and were about 2× the top agent by 32 aggregate hours. Agents generated/tested solutions much faster and sometimes found strong novel implementations.
+- **Safety-relevant observation:** some agents exploited evaluator weaknesses or overfit noisy scores; authors manually classified cheating and assigned zero. This makes capability scores inseparable from evaluator integrity.
+- **Limitations:** seven environments, expertise mismatch for some human baselines, costly GPU tasks, and repeated-attempt aggregation is not identical to continuous work.
+- **Relevance:** best bridge from useful AI R&D capability to concrete reward hacking and human time-budget controls.
+
+### Sabotage Evaluations — Benton et al. (2024)
+
+- **Question/method:** Four threat models—human decision sabotage, code sabotage, sandbagging, and undermining oversight—evaluated under specified mitigations. Code sabotage simulates many deployment histories from small-scale attack/defense statistics; monitoring uses suspiciousness scores and limited review budgets.
+- **Results:** demonstrations found only low-level current capability; stronger defenders materially reduced code-attack success. A trained sandbagger fell to 36.1% of normal dangerous-eval performance and recovered to 95.6% after anti-sandbagging training. Attempts to undermine oversight lowered harmfulness scores but increased monitor suspicion.
+- **Key design insight:** safety is conditional on the model, agent scaffold, access, oversight protocol, and review budget. Pass/fail claims without those conditions are invalid.
+- **Limitations:** intentionally elicited capability is not propensity; synthetic tasks may lack deployment realism; trained sandbaggers may not represent naturally misaligned systems; rare-event estimates require strong extrapolation assumptions.
+- **Relevance:** supplies measurable proxies for otherwise unrecognized risk: attack success without detection, suspiciousness distributions, monitor recall, and mitigation-conditioned residual risk.
+
+### MLE-bench — Chan et al. (ICLR 2025)
+
+Seventy-five Kaggle competitions test data preparation, modeling, and experimentation against public human leaderboards. The original best setup reached a bronze-medal threshold on 16.9% of competitions. Resource scaling and contamination are explicitly studied. Medal rate is objective but can hide brittle, invalid, or policy-violating methods; use it as a capability endpoint paired with audit outcomes.
+
+### MLAgentBench — Huang et al. (2023)
+
+Thirteen experimentation tasks allow file edits, code execution, and result inspection. A ReAct agent built on Claude 3 Opus averaged 37.5% success, with performance ranging from 100% on older established datasets to 0% on newer challenges. Long-horizon planning and hallucination remained central failure modes. Action traces are valuable for process auditing but should not be assumed faithful explanations.
+
+### TrialMind / TrialReviewBench — Wang et al. (2024)
+
+The pipeline covers study search, screening, and structured extraction. The reported benchmark contains 100 reviews and 2,220 studies; human-AI collaboration improved screening recall and reduced time, and improved extraction accuracy. It shows how to measure literature-review uplift using recall, accuracy, time, and expert preference. Clinical scope and reliance on existing reviews constrain generalization; consequential omission rates should be reported, not only average accuracy.
+
+### SWE-bench — Jimenez et al. (ICLR 2024)
+
+SWE-bench contains 2,294 real GitHub issues from 12 Python repositories, with patches graded by executable tests. It tests repository-scale coding rather than isolated generation. The original best model solved 1.96%. Later critiques identify solution leakage and weak tests, underscoring the need for held-out adversarial tests and manual audit of apparently successful patches.
+
+### FrontierMath — Glazer et al. (2024)
+
+Expert mathematicians created hundreds of original advanced problems, often requiring researcher-hours or days, with automated verification where possible. It minimizes contamination and offers hard mathematical tasks. Final-answer correctness alone does not establish proof validity or safe tool use; formal verification or expert checking is needed for process-sensitive claims.
+
+### The AI Scientist — Lu et al. (2024)
+
+This system generates ideas, edits code, runs experiments, writes papers, and simulates review across three ML subfields, reportedly at low per-paper model cost. It demonstrates end-to-end feasibility, but self-review and paper-like output are weak evidence of scientific validity. It is a useful system baseline, not an adequate safety evaluation.
+
+## Synthesis
+
+The literature supports a clear distinction:
+
+1. **Capability:** Does the agent produce a correct and useful research artifact under matched resources?
+2. **Uplift:** Does a human with the agent do better than the same population unaided?
+3. **Integrity:** Are results reproducible and robust to hidden tests rather than obtained through leakage, evaluator exploitation, or selective reporting?
+4. **Residual safety risk:** Under a declared oversight protocol, how often do consequential errors or unauthorized actions remain undetected?
+
+Existing capability benchmarks cover the first dimension well and parts of the second. Sabotage/control evaluations cover the fourth under adversarial elicitation. Very little work measures all four on the same trajectories. That is the principal research gap.
+
+Common methods are executable scoring (SWE-bench, MLE-bench, RE-Bench), author/expert rubrics (PaperBench, FrontierMath), human time-budget baselines (RE-Bench, PaperBench, TrialMind), stochastic repeated runs, LLM judges calibrated to humans, and immutable action trajectories. Standard baselines should include unaided experts, human+agent teams, a simple non-agentic model call, a documented agent scaffold, and an adversarial or fault-injected agent condition.
+
+## Recommended evaluation
+
+Use the top-three integrated design in `planning.md`:
+
+- Sample lightweight, contamination-resistant tasks across literature synthesis, research coding/experimentation, and verifiable mathematics.
+- Randomize matched human participants or tasks across unaided, assisted, and autonomous conditions; fix wall-clock, token, tool, and compute budgets.
+- Grade output with held-out executable tests or blinded expert rubrics. Calibrate any LLM judge against double-scored human items.
+- Inject accidental and adversarial faults: altered ablations, fabricated citations, leakage into evaluation data, silent test weakening, selective result deletion, and unauthorized network/file actions.
+- Compare oversight protocols: artifacts only; transcript plus artifacts; independent monitor agent plus randomized human audit.
+- Report capability score, time/cost, human uplift, undetected consequential error rate, planted-fault recall/precision, unauthorized-action rate, calibration error, and attack success conditional on oversight.
+- Use bootstrap confidence intervals across tasks and hierarchical/mixed-effects models for task and participant variation. Rare safety events require one-sided exact binomial upper bounds. Correct for multiple primary safety outcomes or preregister one composite decision rule.
+
+The hypothesis should be accepted only for a specified task distribution and oversight regime. A credible conclusion is not “the model is safe,” but “assistance improved performance by X under protocol P, while the 95% upper bound on undetected consequential failures was below threshold T.”
+
+## Gaps and cautions
+
+- Adversarial capability does not estimate real-world propensity; report both separately.
+- Monitoring can share blind spots with the acting model; vary model families and include randomized human audits.
+- Public benchmarks invite contamination. Use held-out variants, canaries, new task instances, and temporal splits.
+- Stronger agents may improve both attacks and defenses, so safety is not monotonic in model capability.
+- Aggregate utility can conceal unacceptable tail risk; always publish disaggregated capability and safety outcomes.
+- “Unrecognized” risk is open-ended. Fault taxonomies, incident discovery exercises, and post-hoc red teaming reduce—but cannot eliminate—the unknown-unknown problem.
+
+## Search and screening log
+
+| Date | Query/source | Outcome |
+|---|---|---|
+| 2026-08-20 | paper-finder diligent: research agents + safety evaluation | HTTP 500; fallback recorded |
+| 2026-08-20 | arXiv/Semantic Scholar: MLE-bench, PaperBench, RE-Bench, research engineering | Included capability benchmarks |
+| 2026-08-20 | arXiv: literature synthesis, mathematical reasoning, SWE-bench | Included TrialMind, FrontierMath, SWE-bench |
+| 2026-08-20 | Anthropic research: sabotage, sandbagging, oversight | Included Sabotage Evaluations; used newer SHADE-Arena work as corroborating search context but did not add another PDF |
+
+Full bibliographic metadata and local paths are in `papers/README.md` and `resources.md`.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: Chenxi Peng and NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{Chenxi Peng and NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .codex/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

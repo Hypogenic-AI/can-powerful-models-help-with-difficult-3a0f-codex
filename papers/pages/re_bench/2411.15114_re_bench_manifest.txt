@@ -1,0 +1,14 @@
+PDF: papers/2411.15114_re_bench.pdf
+Total pages: 68
+Pages per chunk: 8
+
+Chunks:
+  2411.15114_re_bench_chunk_001.pdf: pages 1-8
+  2411.15114_re_bench_chunk_002.pdf: pages 9-16
+  2411.15114_re_bench_chunk_003.pdf: pages 17-24
+  2411.15114_re_bench_chunk_004.pdf: pages 25-32
+  2411.15114_re_bench_chunk_005.pdf: pages 33-40
+  2411.15114_re_bench_chunk_006.pdf: pages 41-48
+  2411.15114_re_bench_chunk_007.pdf: pages 49-56
+  2411.15114_re_bench_chunk_008.pdf: pages 57-64
+  2411.15114_re_bench_chunk_009.pdf: pages 65-68

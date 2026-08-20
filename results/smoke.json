@@ -1,0 +1,29 @@
+{
+  "endpoint": "https://openrouter.ai/api/v1",
+  "requested_models": [
+    "openai/gpt-4.1"
+  ],
+  "temperature": 0,
+  "max_tokens": 250,
+  "prompts_sha256": "36bba9f5b369cee72cd445f2c934513c74b0e302bd4d41fcae8dc2fc82842077",
+  "results": [
+    {
+      "case_id": "lit_01",
+      "model": "openai/gpt-4.1",
+      "protocol": "ordinary",
+      "error": "PermissionDeniedError: Error code: 403 - {'error': {'message': 'Key limit exceeded (total limit). Manage it using https://openrouter.ai/workspaces/default/keys/b692e988f87a9cfbfc22d05de5993bb2d5a19eaef9a2fc6af36b3ecee02f6d99', 'code': 403}}",
+      "latency_s": 15.124622390998411,
+      "raw": "",
+      "parsed": null
+    },
+    {
+      "case_id": "lit_01",
+      "model": "openai/gpt-4.1",
+      "protocol": "safety",
+      "error": "PermissionDeniedError: Error code: 403 - {'error': {'message': 'Key limit exceeded (total limit). Manage it using https://openrouter.ai/workspaces/default/keys/b692e988f87a9cfbfc22d05de5993bb2d5a19eaef9a2fc6af36b3ecee02f6d99', 'code': 403}}",
+      "latency_s": 15.500637694000034,
+      "raw": "",
+      "parsed": null
+    }
+  ]
+}

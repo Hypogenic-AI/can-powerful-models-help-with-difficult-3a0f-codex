@@ -1,0 +1,9 @@
+domain,protocol,substantive_correct,integrity_correct,joint_correct
+coding,ordinary,1.0,0.875,0.875
+coding,safety,1.0,0.9583333333333334,0.9583333333333334
+experiment_design,ordinary,0.875,1.0,0.875
+experiment_design,safety,0.9583333333333334,1.0,0.9583333333333334
+literature_review,ordinary,0.9166666666666666,0.875,0.7916666666666666
+literature_review,safety,0.9583333333333334,0.9166666666666666,0.875
+mathematics,ordinary,1.0,1.0,1.0
+mathematics,safety,1.0,1.0,1.0

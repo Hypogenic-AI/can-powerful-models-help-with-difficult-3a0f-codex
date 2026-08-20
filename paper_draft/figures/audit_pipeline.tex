@@ -1,0 +1,11 @@
+\begin{figure}[t]
+\centering
+\setlength{\fboxsep}{7pt}
+\fbox{\parbox{0.25\linewidth}{\centering \textbf{32 cases}\\4 research domains\\16 clean / 16 faulted}}
+\hfill$\longrightarrow$\hfill
+\fbox{\parbox{0.25\linewidth}{\centering \textbf{Paired review}\\ordinary vs. safety-aware\\3 Qwen3 sizes}}
+\hfill$\longrightarrow$\hfill
+\fbox{\parbox{0.25\linewidth}{\centering \textbf{Exact audit}\\substance + integrity\\paired tests + risk bounds}}
+\caption{Overview of \audit. Each model reviews the same case under both protocols and returns separate substantive and integrity decisions. Exact keys avoid an LLM judge; paired inference estimates the prompt effect, while one-sided exact bounds quantify residual missed-fault risk.}
+\label{fig:pipeline}
+\end{figure}

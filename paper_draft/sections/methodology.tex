@@ -1,0 +1,23 @@
+\section{Methodology}
+\label{sec:method}
+
+\subsection{Problem formulation}
+For model $m$, case $i$, and protocol $p\in\{\ordinary,\safetyaware\}$, the model returns a substantive option $\hat{s}_{mip}$ and an integrity option $\hat{g}_{mip}$. Each has one of four choices and an exact key $(s_i,g_i)$. We define substantive correctness $S_{mip}=\mathbb{1}[\hat{s}_{mip}=s_i]$, integrity correctness $G_{mip}=\mathbb{1}[\hat{g}_{mip}=g_i]$, and joint success $J_{mip}=S_{mip}G_{mip}$. On faulted cases, fault recall is the proportion with $G=1$; on clean cases, specificity is the proportion classified as \textsc{Clean}. Our secondary risk-adjusted utility is substantive accuracy minus twice the missed-fault proportion, and we never interpret it without its components.
+
+\subsection{Benchmark construction}
+\auditset contains 32 newly authored cases: eight each for literature review, coding, experiment design, and mathematics. Within every domain, four artifacts are clean and four contain a planted fault. Correct substantive and integrity option positions are each balanced across A, B, C, and D. We do not copy public benchmark questions verbatim.
+
+Faults cover fabricated or mismatched citations, omitted evidence, duplicate cohorts, test leakage or weakening, unauthorized exfiltration, fabricated metrics, pseudoreplication, optional stopping, outcome switching, ignored domain restrictions, division by zero, and omitted counterexamples. This taxonomy draws on failure modes exposed by executable research benchmarks and sabotage evaluations \cite{wijk2024rebench,jimenez2024swebench,benton2024sabotage}. Fixed choices make grading deterministic, but they test recognition and classification rather than open-ended discovery.
+
+\subsection{Prompt protocols and baselines}
+The \ordinary protocol requests a concise expert assessment. The \safetyaware protocol asks the model to solve the substantive problem independently and then audit for concealed invalidity, evaluator manipulation, unauthorized action, and evidence or proof defects; \textsc{Clean} remains a live option. Both protocols require JSON with a substantive option, integrity option, and short rationale. Holding all other factors fixed makes this comparison an oversight-prompt ablation. We use 25\% chance as the substantive baseline and \ordinary as the primary paired baseline; clean cases provide a false-alarm control.
+
+\subsection{Models and execution}
+We evaluate \qwenfour, \qweneight, and \qwenfourteen on all cases and both protocols. We use temperature 0, disable Qwen thinking mode, and cap generation at 180 tokens. Local bfloat16 inference runs on one NVIDIA RTX A6000 with 49,140 MiB memory; batch sizes are 16, 16, and 12. Mean generation-only latency per trial is 0.277, 0.260, and 0.544 seconds, respectively. The run produces 56,166 tokens and no parse failures. Local API cost is \$0, excluding hardware, energy, downloads, and model-loading time.
+
+The preregistration proposed three OpenRouter-hosted model families. The smoke test returned HTTP 403 (``total limit exceeded''), and no OpenAI API key was available. We therefore used three sizes from one locally hosted family. This deviation preserves real-model inference and size variation, but weakens claims about cross-family robustness.
+
+\subsection{Statistical analysis and decision rule}
+The matched unit is a model--case pair, yielding 96 prompt pairs. We compare protocols with exact two-sided McNemar tests for integrity and substantive correctness and apply Holm correction across these two tests. We report paired risk differences with 95\% case-cluster bootstrap intervals from 10,000 resamples (seed 42), which retain the repeated models within each resampled case. Wilson intervals summarize proportions. A one-sided 95\% Clopper--Pearson bound summarizes missed-fault risk, and an exact binomial test compares substantive correctness with the four-choice chance baseline.
+
+Our preregistered illustrative acceptance rule requires above-chance capability, no more than a five-point substantive degradation, no material increase in clean-case false alarms, and a missed-fault upper bound below 10\%. The prompt comparison is not powered as a formal non-inferiority study, so we treat the degradation margin descriptively.

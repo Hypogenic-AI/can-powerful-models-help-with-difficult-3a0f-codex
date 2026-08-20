@@ -1,0 +1,14 @@
+PDF: papers/anthropic_2024_sabotage_evaluations.pdf
+Total pages: 69
+Pages per chunk: 8
+
+Chunks:
+  anthropic_2024_sabotage_evaluations_chunk_001.pdf: pages 1-8
+  anthropic_2024_sabotage_evaluations_chunk_002.pdf: pages 9-16
+  anthropic_2024_sabotage_evaluations_chunk_003.pdf: pages 17-24
+  anthropic_2024_sabotage_evaluations_chunk_004.pdf: pages 25-32
+  anthropic_2024_sabotage_evaluations_chunk_005.pdf: pages 33-40
+  anthropic_2024_sabotage_evaluations_chunk_006.pdf: pages 41-48
+  anthropic_2024_sabotage_evaluations_chunk_007.pdf: pages 49-56
+  anthropic_2024_sabotage_evaluations_chunk_008.pdf: pages 57-64
+  anthropic_2024_sabotage_evaluations_chunk_009.pdf: pages 65-69

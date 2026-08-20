@@ -1,0 +1,21 @@
+\section{Reproducibility Details}
+\label{sec:reproducibility}
+
+The benchmark, raw generations, exact trial scores, summaries, failure cases, environment record, and SHA-256 hashes accompany the project. Benchmark construction and analysis reproduce byte-identical benchmark, scored-trial, and statistical files. The core commands are:
+
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\tiny,frame=none,xleftmargin=0pt,xrightmargin=0pt,breaklines=true,mathescape=false]
+uv venv
+source .venv/bin/activate
+uv sync
+python src/build_benchmark.py
+export CC="$PWD/scripts/zigcc"
+python src/run_local_models.py \
+  --models Qwen/Qwen3-4B Qwen/Qwen3-8B \
+  --output results/raw_outputs_small.json
+HF_HOME="$PWD/.hf_cache" python src/run_local_models.py \
+  --models Qwen/Qwen3-14B --batch-size 12 \
+  --output results/raw_outputs_14b.json
+python src/analyze.py
+\end{lstlisting}
+
+All 192 planned trials completed and parsed. Generation uses deterministic decoding, but GPU kernels and future software or model revisions may still affect exact reruns; the retained raw outputs permit analysis without repeated inference.

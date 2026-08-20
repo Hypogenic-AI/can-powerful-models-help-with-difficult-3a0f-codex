@@ -1,0 +1,24 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Research agents can now search literature, edit repositories, run experiments, and solve technical problems. A correct-looking result, however, can rest on a fabricated citation, weakened test, leaked evaluation set, invalid statistical unit, or missing proof condition. In these settings, output quality alone is an incomplete measure of help: a system must make a useful substantive judgment and recognize defects that would invalidate that judgment.
+
+Capability benchmarks increasingly test realistic research work. \textsc{PaperBench} measures paper replication with author-backed rubrics \cite{starace2025paperbench}; \textsc{RE-Bench} and \textsc{MLE-bench} evaluate open-ended machine-learning engineering \cite{wijk2024rebench,chan2025mlebench}; and \textsc{SWE-bench} uses executable tests for repository issues \cite{jimenez2024swebench}. Work on literature synthesis and mathematics adds expert-grounded and verifiable tasks \cite{wang2024trialmind,glazer2024frontiermath}. These benchmarks establish that capability is growing, but evaluator exploitation and weak tests show why high scores need not imply valid research behavior.
+
+Safety evaluations approach the problem from the other direction. Sabotage evaluations condition risk on a model, scaffold, access policy, monitor, and audit budget \cite{benton2024sabotage}. Yet capability and concealed-failure recognition are seldom scored on the same instance with clean controls. This leaves a practical gap: we cannot tell whether a model that reaches the right research conclusion also notices the fault that makes an artifact unsafe to trust.
+
+We address this gap with \audit, a paired capability--integrity evaluation summarized in \figref{fig:pipeline}. We author 32 balanced cases across four research domains. Each case has an independently keyed substantive choice and integrity choice; half are clean and half contain a consequential planted fault. We compare an ordinary expert-review prompt with a safety-aware prompt that explicitly separates solving from auditing while keeping the model, case, decoding, and output schema fixed.
+
+\input{figures/audit_pipeline}
+
+Across 192 trials, the models answer the substantive question correctly in 96.4\% of cases. The safety-aware prompt improves both substantive and integrity accuracy by 3.1 percentage points, with no reverse discordances, but adjusted McNemar tests give $p=.50$. More importantly, the protocol misses 3/48 faults: the 6.25\% point estimate has a 15.4\% one-sided 95\% upper bound and fails our preregistered 10\% residual-risk criterion. Thus the pilot demonstrates bounded usefulness, not a safety certificate.
+
+Our contributions are:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We propose a same-instance audit that separates substantive correctness, integrity recognition, joint success, and uncertainty.
+    \item We release a balanced 32-case benchmark with exact labels across literature review, coding, experiment design, and mathematics.
+    \item We conduct 192 real-model trials and a paired prompt ablation with case-clustered intervals and exact rare-event bounds.
+    \item We show that high capability and zero clean-case false alarms can coexist with insufficient evidence for low residual risk.
+\end{itemize}
+
+\Secref{sec:related} positions the audit against capability and safety evaluations. \Secref{sec:method} describes the benchmark, protocols, and preregistered analysis. \Secref{sec:results} reports the outcomes, and \secref{sec:discussion} discusses their scope and implications.

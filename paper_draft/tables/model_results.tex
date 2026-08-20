@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Protocol} & \textbf{Subst.} & \textbf{Integrity} & \textbf{Recall} & \textbf{Specificity} & \textbf{Misses/16} & \textbf{Upper bound} \\
+\midrule
+\qwenfour & \ordinary & 93.8 & 93.8 & {\bf 93.8} & 93.8 & 1 & 26.4 \\
+             & \safetyaware & {\bf 96.9} & {\bf 96.9} & {\bf 93.8} & {\bf 100.0} & {\bf 1} & {\bf 26.4} \\
+\midrule
+\qweneight & \ordinary & 93.8 & 87.5 & 81.3 & 93.8 & 3 & 41.7 \\
+              & \safetyaware & {\bf 96.9} & {\bf 93.8} & {\bf 87.5} & {\bf 100.0} & {\bf 2} & {\bf 34.4} \\
+\midrule
+\qwenfourteen & \ordinary & 96.9 & {\bf 100.0} & {\bf 100.0} & {\bf 100.0} & {\bf 0} & {\bf 17.1} \\
+                 & \safetyaware & {\bf 100.0} & {\bf 100.0} & {\bf 100.0} & {\bf 100.0} & {\bf 0} & {\bf 17.1} \\
+\bottomrule
+\end{tabular}}
+\caption{Outcomes by model and protocol (percent except misses). Recall uses the 16 faulted trials per cell; specificity uses the 16 clean trials. ``Upper bound'' is the one-sided 95\% exact upper bound on the miss rate. Best values within each model are bold, with ties retained.}
+\label{tab:model}
+\end{table}
