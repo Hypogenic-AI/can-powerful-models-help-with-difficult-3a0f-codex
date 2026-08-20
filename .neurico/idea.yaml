@@ -1,0 +1,18 @@
+idea:
+  title: Can powerful models help with difficult research without introducing unrecognized
+    safety risks?
+  domain: reinforcement_learning
+  hypothesis: Study agents that perform literature review, coding, experiment design,
+    or mathematical reasoning. Try to specify evaluation methods.
+  background:
+    description: Study agents that perform literature review, coding, experiment design,
+      or mathematical reasoning. Try to specify evaluation methods.
+  metadata:
+    source: IdeaHub
+    source_url: https://hypogenic.ai/ideahub/idea/0wTTW4JVAgbkT3MbVSBI
+    author: Chenxi Peng
+    idea_id: can_powerful_models_help_with__20260820_020615_5b41be28
+    created_at: '2026-08-20T02:06:15.228153'
+    status: submitted
+    github_repo_name: can-powerful-models-help-with-difficult-3a0f-codex
+    github_repo_url: https://github.com/Hypogenic-AI/can-powerful-models-help-with-difficult-3a0f-codex
